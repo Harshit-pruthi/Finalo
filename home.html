@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finalo - Home</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+            background: #F5F7FA;
+            min-height: 100vh;
+        }
+
+        /* Header/Toolbar */
+        .toolbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 16px 20px;
+            color: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .toolbar-title {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .toolbar-logout {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .toolbar-logout:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Main Content */
+        .container {
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* User Profile Card */
+        .user-profile-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            border: 3px solid #667eea;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2E3A59;
+            margin-bottom: 4px;
+        }
+
+        .user-email {
+            font-size: 14px;
+            color: #7C85A2;
+        }
+
+        /* Balance Card */
+        .balance-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 24px;
+            color: white;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .balance-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .balance-amount {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .balance-stats {
+            display: flex;
+            gap: 24px;
+        }
+
+        .stat {
+            flex: 1;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .stat-income {
+            color: #4CAF50;
+        }
+
+        .stat-expense {
+            color: #FF5252;
+        }
+
+        /* Section Header */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2E3A59;
+        }
+
+        .view-all {
+            color: #667eea;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Transaction Item */
+        .transaction-item {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .transaction-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .transaction-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .icon-income {
+            background: #E8F5E9;
+        }
+
+        .icon-expense {
+            background: #FFEBEE;
+        }
+
+        .transaction-details {
+            flex: 1;
+        }
+
+        .transaction-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2E3A59;
+            margin-bottom: 4px;
+        }
+
+        .transaction-category {
+            font-size: 13px;
+            color: #7C85A2;
+        }
+
+        .transaction-amount-section {
+            text-align: right;
+        }
+
+        .transaction-amount {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .amount-income {
+            color: #4CAF50;
+        }
+
+        .amount-expense {
+            color: #FF5252;
+        }
+
+        .transaction-date {
+            font-size: 12px;
+            color: #7C85A2;
+        }
+
+        /* FAB Button */
+        .fab {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 32px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+        }
+
+        /* Modal/Dialog */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.visible {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: 700;
+            color: #2E3A59;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #2E3A59;
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #E0E0E0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-radio-group {
+            display: flex;
+            gap: 16px;
+            margin-top: 8px;
+        }
+
+        .form-radio {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .form-radio input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #667eea;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #E0E0E0;
+            color: #2E3A59;
+        }
+
+        .btn-secondary:hover {
+            background: #BDBDBD;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .empty-text {
+            color: #7C85A2;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="toolbar-title">Finalo</div>
+        <button class="toolbar-logout" id="logoutBtn">Logout</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- User Profile Card -->
+        <div class="user-profile-card">
+            <img class="user-avatar" id="userAvatar" src="" alt="User Avatar">
+            <div class="user-info">
+                <div class="user-name" id="userName">Loading...</div>
+                <div class="user-email" id="userEmail">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Balance Card -->
+        <div class="balance-card">
+            <div class="balance-label">Total Balance</div>
+            <div class="balance-amount" id="totalBalance">₹0.00</div>
+            <div class="balance-stats">
+                <div class="stat">
+                    <div class="stat-label">Income</div>
+                    <div class="stat-value stat-income" id="totalIncome">₹0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Expense</div>
+                    <div class="stat-value stat-expense" id="totalExpense">₹0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="section-header">
+            <h2 class="section-title">Recent Transactions</h2>
+            <a class="view-all" onclick="alert('View all transactions')">View All</a>
+        </div>
+
+        <div id="transactionsList">
+            <!-- Transactions will be added here -->
+            <div class="empty-state">
+                <div class="empty-icon">📊</div>
+                <div class="empty-text">No transactions yet. Add your first transaction!</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAB Button -->
+    <button class="fab" id="addTransactionBtn">+</button>
+
+    <!-- Add Transaction Modal -->
+    <div class="modal" id="transactionModal">
+        <div class="modal-content">
+            <h2 class="modal-header">Add Transaction</h2>
+            
+            <form id="transactionForm">
+                <div class="form-group">
+                    <label class="form-label">Type</label>
+                    <div class="form-radio-group">
+                        <label class="form-radio">
+                            <input type="radio" name="type" value="income" checked>
+                            <span>Income</span>
+                        </label>
+                        <label class="form-radio">
+                            <input type="radio" name="type" value="expense">
+                            <span>Expense</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="title">Title</label>
+                    <input type="text" id="title" class="form-input" placeholder="e.g., Salary, Groceries" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="amount">Amount (₹)</label>
+                    <input type="number" id="amount" class="form-input" placeholder="0.00" step="0.01" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="category">Category</label>
+                    <input type="text" id="category" class="form-input" placeholder="e.g., Food, Transport" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="date">Date</label>
+                    <input type="date" id="date" class="form-input" required>
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Transaction</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAjxCrdCTr-yJ20Cn610rDn_fHJbCGCjHQ",
+            authDomain: "finalo-c3223.firebaseapp.com",
+            projectId: "finalo-c3223",
+            storageBucket: "finalo-c3223.firebasestorage.app",
+            messagingSenderId: "75595124293",
+            appId: "1:75595124293:web:5b6f2614e856762765dd2c",
+            measurementId: "G-HWRW9WE6LS"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Check authentication
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                // Not signed in, redirect to login
+                window.location.href = 'index.html';
+            } else {
+                // Load user data
+                document.getElementById('userName').textContent = user.displayName || 'User';
+                document.getElementById('userEmail').textContent = user.email || '';
+                document.getElementById('userAvatar').src = user.photoURL || 'https://via.placeholder.com/64';
+            }
+        });
+
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                localStorage.clear();
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error('Error signing out:', error);
+            }
+        });
+
+        // Modal functionality
+        const modal = document.getElementById('transactionModal');
+        const addTransactionBtn = document.getElementById('addTransactionBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+
+        addTransactionBtn.addEventListener('click', () => {
+            modal.classList.add('visible');
+            document.getElementById('date').valueAsDate = new Date();
+        });
+
+        cancelBtn.addEventListener('click', () => {
+            modal.classList.remove('visible');
+            document.getElementById('transactionForm').reset();
+        });
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('visible');
+                document.getElementById('transactionForm').reset();
+            }
+        });
+
+        // Transaction management
+        let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+
+        function saveTransactions() {
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+        }
+
+        function updateBalance() {
+            const income = transactions
+                .filter(t => t.type === 'income')
+                .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+            
+            const expense = transactions
+                .filter(t => t.type === 'expense')
+                .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+            
+            const balance = income - expense;
+
+            document.getElementById('totalIncome').textContent = `₹${income.toFixed(2)}`;
+            document.getElementById('totalExpense').textContent = `₹${expense.toFixed(2)}`;
+            document.getElementById('totalBalance').textContent = `₹${balance.toFixed(2)}`;
+        }
+
+        function renderTransactions() {
+            const transactionsList = document.getElementById('transactionsList');
+            
+            if (transactions.length === 0) {
+                transactionsList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📊</div>
+                        <div class="empty-text">No transactions yet. Add your first transaction!</div>
+                    </div>
+                `;
+                return;
+            }
+
+            const sortedTransactions = [...transactions].sort((a, b) => 
+                new Date(b.date) - new Date(a.date)
+            ).slice(0, 10);
+
+            transactionsList.innerHTML = sortedTransactions.map(transaction => {
+                const isIncome = transaction.type === 'income';
+                const iconClass = isIncome ? 'icon-income' : 'icon-expense';
+                const amountClass = isIncome ? 'amount-income' : 'amount-expense';
+                const icon = isIncome ? '💰' : '💸';
+                const sign = isIncome ? '+' : '-';
+
+                return `
+                    <div class="transaction-item">
+                        <div class="transaction-icon ${iconClass}">${icon}</div>
+                        <div class="transaction-details">
+                            <div class="transaction-title">${transaction.title}</div>
+                            <div class="transaction-category">${transaction.category}</div>
+                        </div>
+                        <div class="transaction-amount-section">
+                            <div class="transaction-amount ${amountClass}">${sign}₹${parseFloat(transaction.amount).toFixed(2)}</div>
+                            <div class="transaction-date">${new Date(transaction.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Form submission
+        document.getElementById('transactionForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const transaction = {
+                id: Date.now(),
+                type: formData.get('type'),
+                title: document.getElementById('title').value,
+                amount: document.getElementById('amount').value,
+                category: document.getElementById('category').value,
+                date: document.getElementById('date').value
+            };
+
+            transactions.push(transaction);
+            saveTransactions();
+            updateBalance();
+            renderTransactions();
+
+            modal.classList.remove('visible');
+            e.target.reset();
+        });
+
+        // Initial render
+        updateBalance();
+        renderTransactions();
+    </script>
+</body>
+</html>
