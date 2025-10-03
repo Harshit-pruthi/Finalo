@@ -312,7 +312,7 @@
             margin-bottom: 8px;
         }
 
-        .form-input {
+        .form-input, .form-select {
             width: 100%;
             padding: 12px;
             border: 2px solid #E0E0E0;
@@ -322,7 +322,7 @@
             transition: border-color 0.3s ease;
         }
 
-        .form-input:focus {
+        .form-input:focus, .form-select:focus {
             outline: none;
             border-color: #667eea;
         }
@@ -397,6 +397,27 @@
             color: #7C85A2;
             font-size: 14px;
         }
+
+        /* Loading Spinner */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #E0E0E0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -439,8 +460,11 @@
             <a class="view-all" onclick="alert('View all transactions')">View All</a>
         </div>
 
+        <div class="loading" id="loadingSpinner">
+            <div class="spinner"></div>
+        </div>
+
         <div id="transactionsList">
-            <!-- Transactions will be added here -->
             <div class="empty-state">
                 <div class="empty-icon">📊</div>
                 <div class="empty-text">No transactions yet. Add your first transaction!</div>
@@ -461,11 +485,11 @@
                     <label class="form-label">Type</label>
                     <div class="form-radio-group">
                         <label class="form-radio">
-                            <input type="radio" name="type" value="income" checked>
+                            <input type="radio" name="type" value="Income" id="typeIncome">
                             <span>Income</span>
                         </label>
                         <label class="form-radio">
-                            <input type="radio" name="type" value="expense">
+                            <input type="radio" name="type" value="Expense" checked id="typeExpense">
                             <span>Expense</span>
                         </label>
                     </div>
@@ -483,12 +507,24 @@
 
                 <div class="form-group">
                     <label class="form-label" for="category">Category</label>
-                    <input type="text" id="category" class="form-input" placeholder="e.g., Food, Transport" required>
+                    <select id="category" class="form-select" required>
+                        <!-- Options will be populated dynamically -->
+                    </select>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="date">Date</label>
-                    <input type="date" id="date" class="form-input" required>
+                    <label class="form-label" for="account">Account</label>
+                    <select id="account" class="form-select" required>
+                        <option>Savings Account</option>
+                        <option>Current Account</option>
+                        <option>Credit Card</option>
+                        <option>Cash</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="date">Date & Time</label>
+                    <input type="datetime-local" id="date" class="form-input" required>
                 </div>
 
                 <div class="modal-buttons">
@@ -502,6 +538,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, where, orderBy, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAjxCrdCTr-yJ20Cn610rDn_fHJbCGCjHQ",
@@ -515,17 +552,25 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+
+        // Categories
+        const expenseCategories = ['Food', 'Transport', 'Shopping', 'Bills', 'Entertainment', 'Healthcare', 'Education', 'Other'];
+        const incomeCategories = ['Salary', 'Business', 'Investment', 'Gift', 'Other'];
 
         // Check authentication
         onAuthStateChanged(auth, (user) => {
             if (!user) {
-                // Not signed in, redirect to login
                 window.location.href = 'index.html';
             } else {
-                // Load user data
+                currentUser = user;
                 document.getElementById('userName').textContent = user.displayName || 'User';
                 document.getElementById('userEmail').textContent = user.email || '';
                 document.getElementById('userAvatar').src = user.photoURL || 'https://via.placeholder.com/64';
+                
+                loadTransactions();
             }
         });
 
@@ -544,10 +589,27 @@
         const modal = document.getElementById('transactionModal');
         const addTransactionBtn = document.getElementById('addTransactionBtn');
         const cancelBtn = document.getElementById('cancelBtn');
+        const typeIncome = document.getElementById('typeIncome');
+        const typeExpense = document.getElementById('typeExpense');
+        const categorySelect = document.getElementById('category');
+
+        function updateCategoryOptions(type) {
+            const categories = type === 'Income' ? incomeCategories : expenseCategories;
+            categorySelect.innerHTML = categories.map(cat => `<option>${cat}</option>`).join('');
+        }
+
+        typeIncome.addEventListener('change', () => updateCategoryOptions('Income'));
+        typeExpense.addEventListener('change', () => updateCategoryOptions('Expense'));
 
         addTransactionBtn.addEventListener('click', () => {
             modal.classList.add('visible');
-            document.getElementById('date').valueAsDate = new Date();
+            updateCategoryOptions('Expense');
+            
+            // Set current date and time
+            const now = new Date();
+            const offset = now.getTimezoneOffset();
+            const localDate = new Date(now.getTime() - (offset * 60 * 1000));
+            document.getElementById('date').value = localDate.toISOString().slice(0, 16);
         });
 
         cancelBtn.addEventListener('click', () => {
@@ -562,30 +624,115 @@
             }
         });
 
-        // Transaction management
-        let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+        // Save transaction to Firestore
+        document.getElementById('transactionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-        function saveTransactions() {
-            localStorage.setItem('transactions', JSON.stringify(transactions));
+            if (!currentUser) {
+                alert('User not authenticated');
+                return;
+            }
+
+            const formData = new FormData(e.target);
+            const type = formData.get('type');
+            const title = document.getElementById('title').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const category = document.getElementById('category').value;
+            const account = document.getElementById('account').value;
+            const dateValue = document.getElementById('date').value;
+            const date = new Date(dateValue);
+
+            if (amount <= 0) {
+                alert('Amount must be greater than 0');
+                return;
+            }
+
+            try {
+                const transaction = {
+                    title: title,
+                    amount: amount,
+                    type: type,
+                    category: category,
+                    account: account,
+                    date: Timestamp.fromDate(date),
+                    timestamp: date.getTime(),
+                    userId: currentUser.uid,
+                    userEmail: currentUser.email,
+                    createdAt: Timestamp.now()
+                };
+
+                await addDoc(collection(db, 'transactions'), transaction);
+                
+                modal.classList.remove('visible');
+                e.target.reset();
+                loadTransactions();
+                
+                alert('Transaction saved successfully!');
+            } catch (error) {
+                console.error('Error saving transaction:', error);
+                alert('Failed to save transaction: ' + error.message);
+            }
+        });
+
+        // Load transactions from Firestore
+        async function loadTransactions() {
+            if (!currentUser) return;
+
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const transactionsList = document.getElementById('transactionsList');
+            
+            loadingSpinner.style.display = 'block';
+
+            try {
+                const q = query(
+                    collection(db, 'transactions'),
+                    where('userId', '==', currentUser.uid),
+                    orderBy('timestamp', 'desc')
+                );
+
+                const querySnapshot = await getDocs(q);
+                
+                let transactions = [];
+                let totalIncome = 0;
+                let totalExpense = 0;
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    transactions.push({
+                        id: doc.id,
+                        ...data
+                    });
+
+                    if (data.type === 'Income') {
+                        totalIncome += data.amount;
+                    } else {
+                        totalExpense += data.amount;
+                    }
+                });
+
+                // Update balance UI
+                updateBalanceUI(totalIncome, totalExpense);
+
+                // Render transactions
+                renderTransactions(transactions);
+
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+                alert('Failed to load transactions: ' + error.message);
+            } finally {
+                loadingSpinner.style.display = 'none';
+            }
         }
 
-        function updateBalance() {
-            const income = transactions
-                .filter(t => t.type === 'income')
-                .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+        function updateBalanceUI(totalIncome, totalExpense) {
+            const balance = totalIncome - totalExpense;
             
-            const expense = transactions
-                .filter(t => t.type === 'expense')
-                .reduce((sum, t) => sum + parseFloat(t.amount), 0);
-            
-            const balance = income - expense;
-
-            document.getElementById('totalIncome').textContent = `₹${income.toFixed(2)}`;
-            document.getElementById('totalExpense').textContent = `₹${expense.toFixed(2)}`;
+            document.getElementById('totalIncome').textContent = `₹${totalIncome.toFixed(2)}`;
+            document.getElementById('totalExpense').textContent = `₹${totalExpense.toFixed(2)}`;
             document.getElementById('totalBalance').textContent = `₹${balance.toFixed(2)}`;
         }
 
-        function renderTransactions() {
+        function renderTransactions(transactions) {
             const transactionsList = document.getElementById('transactionsList');
             
             if (transactions.length === 0) {
@@ -598,16 +745,17 @@
                 return;
             }
 
-            const sortedTransactions = [...transactions].sort((a, b) => 
-                new Date(b.date) - new Date(a.date)
-            ).slice(0, 10);
+            const recentTransactions = transactions.slice(0, 10);
 
-            transactionsList.innerHTML = sortedTransactions.map(transaction => {
-                const isIncome = transaction.type === 'income';
+            transactionsList.innerHTML = recentTransactions.map(transaction => {
+                const isIncome = transaction.type === 'Income';
                 const iconClass = isIncome ? 'icon-income' : 'icon-expense';
                 const amountClass = isIncome ? 'amount-income' : 'amount-expense';
                 const icon = isIncome ? '💰' : '💸';
                 const sign = isIncome ? '+' : '-';
+
+                const date = transaction.date.toDate ? transaction.date.toDate() : new Date(transaction.timestamp);
+                const dateStr = date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
 
                 return `
                     <div class="transaction-item">
@@ -617,40 +765,13 @@
                             <div class="transaction-category">${transaction.category}</div>
                         </div>
                         <div class="transaction-amount-section">
-                            <div class="transaction-amount ${amountClass}">${sign}₹${parseFloat(transaction.amount).toFixed(2)}</div>
-                            <div class="transaction-date">${new Date(transaction.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}</div>
+                            <div class="transaction-amount ${amountClass}">${sign}₹${transaction.amount.toFixed(2)}</div>
+                            <div class="transaction-date">${dateStr}</div>
                         </div>
                     </div>
                 `;
             }).join('');
         }
-
-        // Form submission
-        document.getElementById('transactionForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-
-            const formData = new FormData(e.target);
-            const transaction = {
-                id: Date.now(),
-                type: formData.get('type'),
-                title: document.getElementById('title').value,
-                amount: document.getElementById('amount').value,
-                category: document.getElementById('category').value,
-                date: document.getElementById('date').value
-            };
-
-            transactions.push(transaction);
-            saveTransactions();
-            updateBalance();
-            renderTransactions();
-
-            modal.classList.remove('visible');
-            e.target.reset();
-        });
-
-        // Initial render
-        updateBalance();
-        renderTransactions();
     </script>
 </body>
 </html>
